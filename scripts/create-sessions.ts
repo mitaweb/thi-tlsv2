@@ -3,7 +3,7 @@
  * Run: npx tsx scripts/create-sessions.ts
  */
 
-import { createAdminClient } from '../src/lib/supabase/admin.ts'
+import { createAdminClient } from '../src/lib/supabase/admin'
 import * as fs from 'fs'
 
 const supabase = createAdminClient()
