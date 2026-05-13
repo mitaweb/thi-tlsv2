@@ -3,13 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
-  const supabase = createClient()
 
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,10 +16,25 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL
+    const adminPassword = process.env.NEXT_PUBLIC_ADMIN_PASSWORD
 
-    if (error) {
-      setError(error.message)
+    if (!adminEmail || !adminPassword) {
+      setError('Cấu hình admin chưa được thiết lập. Liên hệ quản trị viên.')
+      setLoading(false)
+      return
+    }
+
+    const { createClient } = await import('@/lib/supabase/client')
+    const supabase = createClient()
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: adminEmail,
+      password,
+    })
+
+    if (signInError) {
+      setError('Mật khẩu không đúng')
       setLoading(false)
       return
     }
@@ -57,23 +69,11 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="input-label">Email</label>
-              <input
-                type="email"
-                className="input"
-                placeholder="examiner@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="form-group">
               <label className="input-label">Mật khẩu</label>
               <input
                 type="password"
                 className="input"
-                placeholder="••••••••"
+                placeholder="Nhập mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -82,7 +82,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="btn btn-primary w-full"
+              className="btn btn-primary"
               disabled={loading}
               style={{ width: '100%', justifyContent: 'center' }}
             >
@@ -91,9 +91,8 @@ export default function LoginPage() {
           </form>
 
           <p style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.875rem' }}>
-            Chưa có tài khoản?{' '}
             <Link href="/register" style={{ color: 'var(--primary)', fontWeight: 500 }}>
-              Đăng ký
+              Tạo tài khoản giám khảo
             </Link>
           </p>
         </div>
