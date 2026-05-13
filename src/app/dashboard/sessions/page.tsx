@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
@@ -38,9 +38,11 @@ export default function SessionsPage() {
     setLoadingData(false)
   }
 
-  if (tab === 'list' && sessions.length === 0 && !loadingData) {
-    loadData(activeCategory)
-  }
+  useEffect(() => {
+    if (tab === 'list') {
+      loadData()
+    }
+  }, [tab, activeCategory])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,13 +95,13 @@ export default function SessionsPage() {
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid #e5e7eb', paddingBottom: '0.75rem' }}>
         <button
           className={`btn ${activeCategory === 'sinh_vien' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => { setActiveCategory('sinh_vien'); setForm(f => ({ ...f, category: 'sinh_vien', examId: '', sessions: [] })); setTab('create') }}
+          onClick={() => { setActiveCategory('sinh_vien'); setForm(f => ({ ...f, examId: '', candidateName: '' })); setTab('create') }}
         >
           🎓 Thủ lĩnh Sinh viên
         </button>
         <button
           className={`btn ${activeCategory === 'thpt' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => { setActiveCategory('thpt'); setForm(f => ({ ...f, category: 'thpt', examId: '', sessions: [] })); setTab('create') }}
+          onClick={() => { setActiveCategory('thpt'); setForm(f => ({ ...f, examId: '', candidateName: '' })); setTab('create') }}
         >
           🏫 Học sinh THPT
         </button>
@@ -113,14 +115,8 @@ export default function SessionsPage() {
           + Tạo ca thi
         </button>
         <button
-          className={`btn ${tab === 'create' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => { setTab('create'); setCreatedSession(null) }}
-        >
-          + Tạo ca thi
-        </button>
-        <button
           className={`btn ${tab === 'list' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => { setTab('list'); loadData(activeCategory) }}
+          onClick={() => { setTab('list'); loadData() }}
         >
           📋 Danh sách ca thi
         </button>
@@ -182,7 +178,7 @@ export default function SessionsPage() {
                     </option>
                   ))}
                 </select>
-                {tab === 'create' && exams.length === 0 && (
+                {exams.length === 0 && (
                   <p className="text-sm text-muted mt-1">
                     Chưa có đề thi hoạt động.{' '}
                     <span style={{ color: 'var(--primary)', cursor: 'pointer' }} onClick={() => router.push('/dashboard/exams')}>
