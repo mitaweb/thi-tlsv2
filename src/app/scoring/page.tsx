@@ -35,13 +35,14 @@ export default function PublicScoringPage({
 }) {
   const params = use(searchParams)
   const [examFilter, setExamFilter] = useState(params.exam || 'IT')
-  const [sessionCode, setSessionCode] = useState(params.code || '')
+  const [examinerCode, setExaminerCode] = useState(params.code || '')
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
   const [scores, setScores] = useState<Record<string, number>>({})
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [copyMsg, setCopyMsg] = useState('')
 
   const supabase = createClient()
 
@@ -78,22 +79,20 @@ export default function PublicScoringPage({
     setLoading(false)
   }
 
-  const handleSearch = () => {
-    if (!sessionCode.trim()) {
-      fetchSessions()
-      return
-    }
-    const found = sessions.find(s => s.code.toLowerCase() === sessionCode.toLowerCase())
-    if (found) {
-      setSelectedSession(found)
-      const initialScores: Record<string, number> = {}
-      found.answers.forEach((a: any) => {
-        initialScores[a.id] = a.score_obtained || 0
-      })
-      setScores(initialScores)
-    } else {
-      alert('Không tìm thấy ca thi với mã: ' + sessionCode)
-    }
+  const handleCopyLink = (code: string) => {
+    const url = `${window.location.origin}/scoring?exam=${examFilter}&code=${code}`
+    navigator.clipboard.writeText(url)
+    setCopyMsg('Đã copy!')
+    setTimeout(() => setCopyMsg(''), 2000)
+  }
+
+  const handleSelectSession = (session: Session) => {
+    setSelectedSession(session)
+    const initialScores: Record<string, number> = {}
+    session.answers.forEach((a: any) => {
+      initialScores[a.id] = a.score_obtained || 0
+    })
+    setScores(initialScores)
   }
 
   const handleSaveScore = async (session: Session) => {
@@ -117,16 +116,81 @@ export default function PublicScoringPage({
   }
 
   const examColor = examFilter === 'MONITOR' ? '#9333ea' : 'var(--primary)'
+  const bgkNumbers = ['BGK-1', 'BGK-2', 'BGK-3', 'BGK-4']
+  const isBgv = examinerCode && bgkNumbers.includes(examinerCode)
+  const isGk = examinerCode && examinerCode.startsWith('GK-')
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', padding: '1rem' }}>
       <div style={{ maxWidth: '900px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 700, color: examColor }}>
-            Chấm điểm - Phần thi {examFilter === 'MONITOR' ? 'Màn hình' : 'IT'}
-          </h1>
-          <p className="text-muted text-sm">Giám khảo không cần đăng nhập</p>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '1rem',
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: '1rem',
+            padding: '0.75rem 1.5rem',
+            marginBottom: '0.5rem',
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              background: examColor,
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '1.25rem',
+            }}>
+              {examinerCode ? (examinerCode.startsWith('BGK') ? examinerCode.split('-')[1] : examinerCode.split('-')[1]) : '?'}
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: 700, fontSize: '1.1rem', color: examColor }}>
+                {isBgv ? `Ban Giám khảo ${examinerCode.split('-')[1]}` :
+                 isGk ? `Giám khảo SV ${parseInt(examinerCode.split('-')[1])}` :
+                 examinerCode ? examinerCode : 'Chấm điểm'}
+              </div>
+              <div className="text-sm text-muted">
+                Phần thi {examFilter === 'MONITOR' ? 'Màn hình' : 'IT'} · {sessions.length} bài thi
+              </div>
+            </div>
+          </div>
+          {examinerCode && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button
+                onClick={() => setExamFilter(examFilter === 'IT' ? 'MONITOR' : 'IT')}
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  fontSize: '0.8rem',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.5rem',
+                  background: 'var(--card)',
+                  cursor: 'pointer',
+                }}
+              >
+                Chuyển sang {examFilter === 'IT' ? 'Màn hình' : 'IT'}
+              </button>
+              <button
+                onClick={() => handleCopyLink(examinerCode)}
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  fontSize: '0.8rem',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.5rem',
+                  background: copyMsg ? '#dcfce7' : 'var(--card)',
+                  cursor: 'pointer',
+                  color: copyMsg ? 'var(--success)' : 'var(--text)',
+                }}
+              >
+                {copyMsg || 'Share link'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Exam filter tabs */}
@@ -137,7 +201,7 @@ export default function PublicScoringPage({
               padding: '0.5rem 1rem',
               border: '1px solid var(--border)',
               borderRadius: '0.5rem',
-              background: examFilter === 'IT' ? 'var(--primary)' : 'white',
+              background: examFilter === 'IT' ? 'var(--primary)' : 'var(--card)',
               color: examFilter === 'IT' ? 'white' : 'var(--text)',
               cursor: 'pointer',
               fontWeight: 600,
@@ -151,7 +215,7 @@ export default function PublicScoringPage({
               padding: '0.5rem 1rem',
               border: '1px solid var(--border)',
               borderRadius: '0.5rem',
-              background: examFilter === 'MONITOR' ? '#9333ea' : 'white',
+              background: examFilter === 'MONITOR' ? '#9333ea' : 'var(--card)',
               color: examFilter === 'MONITOR' ? 'white' : 'var(--text)',
               cursor: 'pointer',
               fontWeight: 600,
@@ -161,35 +225,18 @@ export default function PublicScoringPage({
           </button>
         </div>
 
-        {/* Search by code */}
-        <div className="card" style={{ marginBottom: '1rem' }}>
-          <label className="input-label">Tìm theo mã ca thi</label>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="text"
-              className="input"
-              placeholder="Nhập mã ca thi (VD: IT-2026-001)"
-              value={sessionCode}
-              onChange={(e) => setSessionCode(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              style={{ flex: 1 }}
-            />
-            <button className="btn btn-primary" onClick={handleSearch}>
-              Tìm
-            </button>
-          </div>
-        </div>
-
         {/* Session list or selected session */}
         {!selectedSession ? (
           <>
             <h3 style={{ fontWeight: 600, marginBottom: '0.75rem' }}>
-              Danh sách ca thi ({sessions.length})
+              Danh sách bài thi ({sessions.length})
             </h3>
             {loading ? (
               <p className="text-muted">Đang tải...</p>
             ) : sessions.length === 0 ? (
-              <p className="text-muted">Chưa có ca thi nào.</p>
+              <div className="card" style={{ textAlign: 'center', padding: '2rem' }}>
+                <p className="text-muted">Chưa có bài thi nào trong phần thi này.</p>
+              </div>
             ) : (
               <div style={{ display: 'grid', gap: '0.75rem' }}>
                 {sessions.map(session => {
@@ -200,15 +247,14 @@ export default function PublicScoringPage({
                     <div
                       key={session.id}
                       className="card"
-                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
-                      onClick={() => {
-                        setSelectedSession(session)
-                        const initialScores: Record<string, number> = {}
-                        session.answers.forEach((a: any) => {
-                          initialScores[a.id] = a.score_obtained || 0
-                        })
-                        setScores(initialScores)
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        borderLeft: `4px solid ${examColor}`,
                       }}
+                      onClick={() => handleSelectSession(session)}
                     >
                       <div>
                         <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: '1rem' }}>
@@ -217,7 +263,9 @@ export default function PublicScoringPage({
                         <div className="text-sm text-muted">{session.candidate_name || 'Thí sinh'}</div>
                       </div>
                       <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontWeight: 600 }}>{totalScore}/{maxScore}</div>
+                        <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                          {totalScore}/{maxScore}
+                        </div>
                         <div className="text-sm text-muted">
                           {session.ended_at ? new Date(session.ended_at).toLocaleString('vi-VN') : ''}
                         </div>
@@ -234,13 +282,13 @@ export default function PublicScoringPage({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <button
                 className="btn"
-                style={{ border: '1px solid var(--border)', background: 'white' }}
+                style={{ border: '1px solid var(--border)', background: 'var(--card)' }}
                 onClick={() => setSelectedSession(null)}
               >
-                Quay lại danh sách
+                Quay lại
               </button>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'monospace' }}>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', fontFamily: 'monospace', color: examColor }}>
                   {selectedSession.code}
                 </div>
                 <div className="text-sm text-muted">{selectedSession.candidate_name || 'Thí sinh'}</div>
@@ -261,7 +309,7 @@ export default function PublicScoringPage({
                   <div style={{ fontWeight: 500, marginBottom: '0.5rem' }}>
                     Câu {idx + 1}: {answer.questions.content}
                   </div>
-                  <div style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                  <div style={{ marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', background: 'var(--bg)', padding: '0.5rem', borderRadius: '0.375rem' }}>
                     <strong>Trả lời:</strong> {answer.answer_value || '(không có)'}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -280,11 +328,17 @@ export default function PublicScoringPage({
                 </div>
               ))}
 
-              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontWeight: 600 }}>
-                  Tổng điểm: {
-                    Object.values(scores).reduce((sum, s) => sum + s, 0)
-                  }/{selectedSession.answers.reduce((sum, a) => sum + a.questions.score, 0)}
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                background: 'var(--bg)',
+                borderRadius: '0.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}>
+                <div style={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                  Tổng: {Object.values(scores).reduce((sum, s) => sum + s, 0)}/{selectedSession.answers.reduce((sum, a) => sum + a.questions.score, 0)}
                 </div>
                 <button
                   className="btn btn-primary"

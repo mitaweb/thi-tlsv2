@@ -149,52 +149,130 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Link cho giám khảo */}
-      <div className="card" style={{ marginTop: '1.5rem' }}>
-        <h3 style={{ fontWeight: 600, marginBottom: '1rem' }}>Link cho giám khảo chấm điểm</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-          <div>
-            <label className="input-label">Link chấm điểm IT</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                className="input"
-                readOnly
-                value={`${examUrl}/scoring?exam=IT`}
-                style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
-              />
-              <button
-                className="btn"
-                style={{ border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
-                onClick={() => navigator.clipboard.writeText(`${examUrl}/scoring?exam=IT`)}
-              >
-                Copy
-              </button>
-            </div>
-          </div>
-          <div>
-            <label className="input-label">Link chấm điểm Màn hình</label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                className="input"
-                readOnly
-                value={`${examUrl}/scoring?exam=MONITOR`}
-                style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
-              />
-              <button
-                className="btn"
-                style={{ border: '1px solid var(--border)', whiteSpace: 'nowrap' }}
-                onClick={() => navigator.clipboard.writeText(`${examUrl}/scoring?exam=MONITOR`)}
-              >
-                Copy
-              </button>
-            </div>
-          </div>
+      {/* Link cho Ban Giám khảo */}
+      <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <h2 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>Ban Giám khảo (BGK)</h2>
+          <span className="badge badge-info">4 người</span>
         </div>
-        <p className="text-sm text-muted" style={{ marginTop: '0.75rem' }}>
-          Giám khảo chỉ cần mở link, điền mã ca thi và chấm điểm. Không cần đăng nhập.
-        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          {[
+            { num: 1, name: 'Giám khảo 1', code: 'BGK-1', exam: 'IT' },
+            { num: 2, name: 'Giám khảo 2', code: 'BGK-2', exam: 'MONITOR' },
+            { num: 3, name: 'Giám khảo 3', code: 'BGK-3', exam: 'IT' },
+            { num: 4, name: 'Giám khảo 4', code: 'BGK-4', exam: 'MONITOR' },
+          ].map((gk) => (
+            <div
+              key={gk.code}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                borderRadius: '0.75rem',
+              }}
+            >
+              <div style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                background: 'var(--primary)',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 700,
+                fontSize: '1rem',
+                flexShrink: 0,
+              }}>
+                {gk.num}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{gk.name}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{gk.code}</div>
+              </div>
+              <button
+                className="btn"
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  fontSize: '0.75rem',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+                onClick={() => {
+                  const link = `${examUrl}/scoring?exam=${gk.exam}&code=${gk.code}`
+                  navigator.clipboard.writeText(link)
+                }}
+              >
+                Copy link
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+          <h2 style={{ fontWeight: 700, fontSize: '1.1rem', margin: 0 }}>Giám khảo sinh viên (GK)</h2>
+          <span className="badge badge-info">30 người</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.5rem' }}>
+          {Array.from({ length: 30 }, (_, i) => {
+            const num = i + 1
+            const exam = num <= 15 ? 'IT' : 'MONITOR'
+            return (
+              <div
+                key={num}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  background: 'var(--card)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '0.5rem',
+                }}
+              >
+                <div style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '50%',
+                  background: exam === 'IT' ? 'var(--primary)' : '#9333ea',
+                  color: 'white',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  flexShrink: 0,
+                }}>
+                  {num}
+                </div>
+                <span style={{ flex: 1, fontSize: '0.8rem', fontWeight: 500 }}>GK {num}</span>
+                <button
+                  style={{
+                    padding: '0.2rem 0.5rem',
+                    fontSize: '0.7rem',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg)',
+                    borderRadius: '0.25rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    color: 'var(--text)',
+                  }}
+                  onClick={() => {
+                    const link = `${examUrl}/scoring?exam=${exam}&code=GK-${String(num).padStart(2, '0')}`
+                    navigator.clipboard.writeText(link)
+                  }}
+                >
+                  Copy
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
